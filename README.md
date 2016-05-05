@@ -3,7 +3,7 @@ Firstly, we have to install TensorFlow on Ubuntu 14.04 by fllowing the instructi
 
 Clone the project: https://github.com/tunglx/neural_art_tensorflow 
 
-Download the VGG and I2V models: https://goo.gl/hKCr8e 
+Download the VGG model: https://goo.gl/hKCr8e 
 
 Running “neural_art_tensorflow.py” without options yields the default settings and input images. Available options are:
 
