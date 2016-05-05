@@ -7,11 +7,6 @@ Download the VGG and I2V models: https://goo.gl/hKCr8e
 
 Running “neural_art_tensorflow.py” without options yields the default settings and input images. Available options are:
 
-<<<<<<< HEAD
-=======
-“-m, --model”: Model type: “VGG” or “I2V”
-
->>>>>>> 661989b2852200600703d64a89beb72d28d5dc23
 “-p, --model_path”: Path to the Model
 
 “-cp, --content_path”: Path to the Content image
@@ -26,8 +21,4 @@ Running “neural_art_tensorflow.py” without options yields the default settin
 
 For example:
 
-<<<<<<< HEAD
 python neural_art_tensorflow.py -p ./VGG_model -cp ./images/samsung.jpg -sp ./images/style.jpg -i 100 -a 1 -b 200
-=======
-python neural_art_tensorflow.py -m VGG -p ./VGG_model -cp ./images/samsung.jpg -sp ./images/style.jpg -i 100 -a 1 -b 200
->>>>>>> 661989b2852200600703d64a89beb72d28d5dc23
