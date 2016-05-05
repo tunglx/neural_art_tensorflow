@@ -48,9 +48,17 @@ def save_image(im, iteration, out_dir):
 def parseArgs():
     parser = argparse.ArgumentParser(
         description='A Neural Algorithm of Artistic Style')
+<<<<<<< HEAD
     parser.add_argument('--modelpath', '-p', default='VGG_model',
                         help='Model file path')
     parser.add_argument('--content', '-cp', default='images/samsung.jpg',
+=======
+    parser.add_argument('--model', '-m', default='vgg',
+                        help='Model type (vgg, i2v, alexnet)')
+    parser.add_argument('--modelpath', '-p', default='vgg',
+                        help='Model file path')
+    parser.add_argument('--content', '-cp', default='images/sd.jpg',
+>>>>>>> 661989b2852200600703d64a89beb72d28d5dc23
                         help='Content image path')
     parser.add_argument('--style', '-sp', default='images/style.jpg',
                         help='Style image path')
@@ -63,16 +71,37 @@ def parseArgs():
     parser.add_argument('--device', default="/cpu:0")
     parser.add_argument('--out_dir', default="output")
     args = parser.parse_args()
+<<<<<<< HEAD
     return args.content, args.style, args.modelpath, args.alpha, args.beta, args.iters, args.device, args
 
 # Choose Convolutional model
 def getModel(image, params_path):
     return VGG16(image, params_path)
+=======
+    return args.content, args.style, args.modelpath, args.model, args.alpha, args.beta, args.iters, args.device, args
+
+# Choose Convolutional model
+def getModel(image, params_path, model):
+    if model == 'VGG':
+        return VGG16(image, params_path)
+    elif model == 'I2V':
+        return I2V(image, params_path)
+    elif model == 'ALEXNET':
+        return Alexnet(image, params_path)
+    else:
+        print 'Invalid model name: use `VGG` or `I2V` or `ALEXNET`'
+        return None
+
+>>>>>>> 661989b2852200600703d64a89beb72d28d5dc23
 
 # Main process
 
 # Get value from run command 
+<<<<<<< HEAD
 content_image_path, style_image_path, params_path, alpha, beta, num_iters, device, args = parseArgs()
+=======
+content_image_path, style_image_path, params_path, modeltype, alpha, beta, num_iters, device, args = parseArgs()
+>>>>>>> 661989b2852200600703d64a89beb72d28d5dc23
 width = 600
 # The actual calculation
 print "Read images..."
