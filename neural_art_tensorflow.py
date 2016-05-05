@@ -50,15 +50,13 @@ def parseArgs():
         description='A Neural Algorithm of Artistic Style')
     parser.add_argument('--model', '-m', default='vgg',
                         help='Model type (vgg, i2v, alexnet)')
-    parser.add_argument('--modelpath', '-mp', default='vgg',
+    parser.add_argument('--modelpath', '-p', default='vgg',
                         help='Model file path')
-    parser.add_argument('--content', '-c', default='images/sd.jpg',
+    parser.add_argument('--content', '-cp', default='images/sd.jpg',
                         help='Content image path')
-    parser.add_argument('--style', '-s', default='images/style.jpg',
+    parser.add_argument('--style', '-sp', default='images/style.jpg',
                         help='Style image path')
-    parser.add_argument('--width', '-w', default=800, type=int,
-                        help='Output image width')
-    parser.add_argument('--iters', '-i', default=5000, type=int,
+    parser.add_argument('--iters', '-i', default=200, type=int,
                         help='Number of iterations')
     parser.add_argument('--alpha', '-a', default=1.0, type=float,
                         help='alpha (content weight)')
@@ -67,26 +65,26 @@ def parseArgs():
     parser.add_argument('--device', default="/cpu:0")
     parser.add_argument('--out_dir', default="output")
     args = parser.parse_args()
-    return args.content, args.style, args.modelpath, args.model, args.width, args.alpha, args.beta, args.iters, args.device, args
+    return args.content, args.style, args.modelpath, args.model, args.alpha, args.beta, args.iters, args.device, args
 
 # Choose Convolutional model
 def getModel(image, params_path, model):
-    if model == 'vgg':
+    if model == 'VGG':
         return VGG16(image, params_path)
-    elif model == 'i2v':
+    elif model == 'I2V':
         return I2V(image, params_path)
-    elif model == 'alexnet':
+    elif model == 'ALEXNET':
         return Alexnet(image, params_path)
     else:
-        print 'Invalid model name: use `vgg` or `i2v` or `alexnet`'
+        print 'Invalid model name: use `VGG` or `I2V` or `ALEXNET`'
         return None
 
 
 # Main process
 
 # Get value from run command 
-content_image_path, style_image_path, params_path, modeltype, width, alpha, beta, num_iters, device, args = parseArgs()
-
+content_image_path, style_image_path, params_path, modeltype, alpha, beta, num_iters, device, args = parseArgs()
+width = 600
 # The actual calculation
 print "Read images..."
 content_image = read_image(content_image_path, width)
