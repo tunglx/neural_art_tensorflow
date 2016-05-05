@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-from models import VGG16, I2V, Alexnet
+from models import VGG16
 import argparse
 import scipy.misc
 import os
@@ -48,11 +48,9 @@ def save_image(im, iteration, out_dir):
 def parseArgs():
     parser = argparse.ArgumentParser(
         description='A Neural Algorithm of Artistic Style')
-    parser.add_argument('--model', '-m', default='vgg',
-                        help='Model type (vgg, i2v, alexnet)')
-    parser.add_argument('--modelpath', '-p', default='vgg',
+    parser.add_argument('--modelpath', '-p', default='VGG_model',
                         help='Model file path')
-    parser.add_argument('--content', '-cp', default='images/sd.jpg',
+    parser.add_argument('--content', '-cp', default='images/samsung.jpg',
                         help='Content image path')
     parser.add_argument('--style', '-sp', default='images/style.jpg',
                         help='Style image path')
@@ -65,25 +63,16 @@ def parseArgs():
     parser.add_argument('--device', default="/cpu:0")
     parser.add_argument('--out_dir', default="output")
     args = parser.parse_args()
-    return args.content, args.style, args.modelpath, args.model, args.alpha, args.beta, args.iters, args.device, args
+    return args.content, args.style, args.modelpath, args.alpha, args.beta, args.iters, args.device, args
 
 # Choose Convolutional model
-def getModel(image, params_path, model):
-    if model == 'VGG':
-        return VGG16(image, params_path)
-    elif model == 'I2V':
-        return I2V(image, params_path)
-    elif model == 'ALEXNET':
-        return Alexnet(image, params_path)
-    else:
-        print 'Invalid model name: use `VGG` or `I2V` or `ALEXNET`'
-        return None
-
+def getModel(image, params_path):
+    return VGG16(image, params_path)
 
 # Main process
 
 # Get value from run command 
-content_image_path, style_image_path, params_path, modeltype, alpha, beta, num_iters, device, args = parseArgs()
+content_image_path, style_image_path, params_path, alpha, beta, num_iters, device, args = parseArgs()
 width = 600
 # The actual calculation
 print "Read images..."
@@ -93,12 +82,12 @@ g = tf.Graph()
 with g.device(device), g.as_default(), tf.Session(graph=g, config=tf.ConfigProto(allow_soft_placement=True)) as sess:
     print "Load content values..."
     image = tf.constant(content_image)
-    model = getModel(image, params_path, modeltype)
+    model = getModel(image, params_path)
     content_image_y_val = [sess.run(y_l) for y_l in model.y()]  
 
     print "Load style values..."
     image = tf.constant(style_image)
-    model = getModel(image, params_path, modeltype)
+    model = getModel(image, params_path)
     y = model.y()
     style_image_st_val = []
     for l in range(len(y)):
@@ -113,7 +102,7 @@ with g.device(device), g.as_default(), tf.Session(graph=g, config=tf.ConfigProto
     #gen_image = tf.Variable(tf.truncated_normal(content_image.shape, stddev=20), trainable=True, name='gen_image')
     # Start from the original image
     gen_image = tf.Variable(tf.constant(np.array(content_image, dtype=np.float32)), trainable=True, name='gen_image')
-    model = getModel(gen_image, params_path, modeltype)
+    model = getModel(gen_image, params_path)
     y = model.y()
     L_content = 0.0
     L_style   = 0.0
