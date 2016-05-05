@@ -123,7 +123,7 @@ with g.device(device), g.as_default(), tf.Session(graph=g, config=tf.ConfigProto
     learning_rate = tf.train.exponential_decay(learning_rate=2.0, global_step=global_step, decay_steps=100, decay_rate=0.94, staircase=True)
     train_step = tf.train.RMSPropOptimizer(learning_rate).minimize(L, global_step=global_step)
     
-    # Set up the summary writer (saving summaries is optional)
+    # Set up the summary writer
     tf.scalar_summary("L_content", L_content)
     tf.scalar_summary("L_style", L_style)
     gen_image_addmean = tf.Variable(tf.constant(np.array(content_image, dtype=np.float32)), trainable=False)
