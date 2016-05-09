@@ -20,29 +20,29 @@ def sub_mean(img):
         img[0,:,:,i] -= mean[i]
     return img
 
-# read image function
-def read_image(path, w=None):
+# doc anh
+def read_img(path, w=None):
     img = scipy.misc.imread(path)
-    # Resize if ratio is specified
+    # Chinh kich thuoc anh
     if w:
         r = w / np.float32(img.shape[1])
         img = scipy.misc.imresize(img, (int(img.shape[0]*r), int(img.shape[1]*r)))
     img = img.astype(np.float32)
     img = img[None, ...]
-    # Subtract the image mean
+    
     img = sub_mean(img)
     return img
 
-# save image function
+# Luu anh
 def save_image(im, iteration, out_dir):
     img = im.copy()
-    # Add the image mean
+    
     img = add_mean(img)
     img = np.clip(img[0, ...],0,255).astype(np.uint8)
-    nowtime = dt.now().strftime('%Y_%m_%d_%H_%M_%S')
+    nowtime = dt.now().strftime('%H_%M_%S_%d_%m_%Y')
     if not os.path.exists(out_dir):
         os.mkdir(out_dir)    
-    scipy.misc.imsave("{}/neural_art_{}_iteration{}.png".format(out_dir, nowtime, iteration), img)
+    scipy.misc.imsave("{}/output_{}_iteration{}.png".format(out_dir, nowtime, iteration), img)
    
 # Make command to run program 
 def parseArgs():
@@ -72,77 +72,84 @@ def getModel(image, params_path):
 # Main process
 
 # Get value from run command 
-content_image_path, style_image_path, params_path, alpha, beta, num_iters, device, args = parseArgs()
+content_img_path, style_img_path, params_path, alpha, beta, num_iters, device, args = parseArgs()
 width = 600
 # The actual calculation
 print "Read images..."
-content_image = read_image(content_image_path, width)
-style_image   = read_image(style_image_path, width)
+content_img = read_img(content_img_path, width) #Anh noi dung
+style_img   = read_img(style_img_path, width) #Anh style
+
 g = tf.Graph()
 with g.device(device), g.as_default(), tf.Session(graph=g, config=tf.ConfigProto(allow_soft_placement=True)) as sess:
-    print "Load content values..."
-    image = tf.constant(content_image)
-    model = getModel(image, params_path)
-    content_image_y_val = [sess.run(y_l) for y_l in model.y()]  
+    print "Calculate convolutional layers for content image"
+    image_content = tf.constant(content_img)    #Doc anh noi dung
+    model_content = getModel(image_content, params_path)    # Lap anh noi dung vao model
+    content_conv_layers = [sess.run(layer) for layer in model_content.layer_used()]  # Tinh cac feature maps tren cac lop Convolution
 
-    print "Load style values..."
-    image = tf.constant(style_image)
-    model = getModel(image, params_path)
-    y = model.y()
-    style_image_st_val = []
-    for l in range(len(y)):
-        num_filters = content_image_y_val[l].shape[3]
-        st_shape = [-1, num_filters]
-        st_ = tf.reshape(y[l], st_shape)
-        st = tf.matmul(tf.transpose(st_), st_)
-        style_image_st_val.append(sess.run(st)) 
-    
-    print "Construct graph..."
-    # Start from white noise
-    #gen_image = tf.Variable(tf.truncated_normal(content_image.shape, stddev=20), trainable=True, name='gen_image')
-    # Start from the original image
-    gen_image = tf.Variable(tf.constant(np.array(content_image, dtype=np.float32)), trainable=True, name='gen_image')
-    model = getModel(gen_image, params_path)
-    y = model.y()
-    L_content = 0.0
-    L_style   = 0.0
-    for l in range(len(y)):
+    print "Calculate convolutional layers for style image"
+    image_style1 = tf.constant(style_img)  #Doc anh style 1
+    model_style1 = getModel(image_style1, params_path)    # Lap anh style vao model
+    layers = model_style1.layer_used()   #layers: tap cac lop convolution
+    style_conv_layers = []
+    for l in range(len(layers)): #Xet cac lop Convolution
+        num_filters = content_conv_layers[l].shape[3] #Do sau (so filters) cua moi lop Convolution
+        style_shape = [-1, num_filters]
+        style_ = tf.reshape(layers[l], style_shape)
+        style = tf.matmul(tf.transpose(style_), style_)  #Ma tran Gram cho style
+        style_conv_layers.append(sess.run(style)) 
+
+    # Bat dau tu anh nhieu den trang
+    #gen_image = tf.Variable(tf.truncated_normal(content_img.shape, stddev=20), trainable=True, name='gen_image')
+    # Bat dau tu anh content
+    gen_image = tf.Variable(tf.constant(np.array(content_img, dtype=np.float32)), trainable=True, name='gen_image') #gen_image: anh can sinh
+    model = getModel(gen_image, params_path)    # Lap anh can sinh vao model
+    layers = model.layer_used()   #layers: tap cac lop Convolution cua anh can sinh
+    Loss_content = 0.0
+    Loss_style   = 0.0
+    for l in range(len(layers)):
         # Content loss
-        L_content += model.alpha[l]*tf.nn.l2_loss(y[l] - content_image_y_val[l])
+        Loss_content += model.alpha[l]*tf.nn.l2_loss(layers[l] - content_conv_layers[l])
         # Style loss
-        num_filters = content_image_y_val[l].shape[3]
-        st_shape = [-1, num_filters]
-        st_ = tf.reshape(y[l], st_shape)
-        st = tf.matmul(tf.transpose(st_), st_)
-        N = np.prod(content_image_y_val[l].shape).astype(np.float32)
-        L_style += model.beta[l]*tf.nn.l2_loss(st - style_image_st_val[l])/N**2/len(y)
-    # The loss
-    L = alpha* L_content + beta * L_style
-    # The optimizer
+        num_filters = content_conv_layers[l].shape[3]
+        style_shape = [-1, num_filters]
+        style_ = tf.reshape(layers[l], style_shape)
+        style = tf.matmul(tf.transpose(style_), style_)  #Ma tran Gram cho gen_image
+        N = np.prod(content_conv_layers[l].shape).astype(np.float32)
+        Loss_style += model.beta[l]*tf.nn.l2_loss(style - style_conv_layers[l])/N**2/len(layers)    # Loss style 1
+        
+    L = alpha* Loss_content + beta * Loss_style
+
+    # Optimizer
     global_step = tf.Variable(0, trainable=False)
     learning_rate = tf.train.exponential_decay(learning_rate=2.0, global_step=global_step, decay_steps=100, decay_rate=0.94, staircase=True)
-    train_step = tf.train.RMSPropOptimizer(learning_rate).minimize(L, global_step=global_step)
+    #train_step = tf.train.AdamOptimizer(learning_rate).minimize(L, global_step=global_step)
     
-    # Set up the summary writer (saving summaries is optional)
-    tf.scalar_summary("L_content", L_content)
-    tf.scalar_summary("L_style", L_style)
-    gen_image_addmean = tf.Variable(tf.constant(np.array(content_image, dtype=np.float32)), trainable=False)
+    #train_step = tf.train.AdagradOptimizer(learning_rate).minimize(L, global_step=global_step)
+
+    train_step = tf.train.RMSPropOptimizer(learning_rate).minimize(L, global_step=global_step)
+
+
+    tf.scalar_summary("Loss_content", Loss_content)
+    tf.scalar_summary("Loss_style", Loss_style)
+
+    gen_image_addmean = tf.Variable(tf.constant(np.array(content_img, dtype=np.float32)), trainable=False)
     tf.image_summary("Generated image (TODO: add mean)", gen_image_addmean)
     summary_op = tf.merge_all_summaries()
     summary_writer = tf.train.SummaryWriter('/tmp/na-logs', graph_def=sess.graph_def)
     
-    print "Start calculation..."
-    # The optimizer has variables that require initialization as well
+
+    print "Calculate for genarate output image"
+
     sess.run(tf.initialize_all_variables())
     for i in range(num_iters):
-        if i % 10 == 0:
-            gen_image_val = sess.run(gen_image)
-            save_image(gen_image_val, i, args.out_dir)
-            print "L_content: ", sess.run(L_content), "L_style: ", sess.run(L_style)
-            # Increment summary
-            sess.run(tf.assign(gen_image_addmean, add_mean(gen_image_val)))
+        if i % 10 == 0: # moi 10 vong lap lai in ra loss va in ra anh
+            generation_image = sess.run(gen_image)
+            save_image(generation_image, i, args.out_dir)
+            print "Loss_content: ", sess.run(Loss_content), "Loss_style: ", sess.run(Loss_style)
+
+            sess.run(tf.assign(gen_image_addmean, add_mean(generation_image)))
             summary_str = sess.run(summary_op)
             summary_writer.add_summary(summary_str, i)
-        print "Iter:", i
+        print "Iteration:", i
         sess.run(train_step)
 

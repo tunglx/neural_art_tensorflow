@@ -76,5 +76,5 @@ class VGG16(Network):
              .conv(3, 3, 512, 512, name='conv5_3')
              .pool())
 
-    def y(self):
+    def layer_used(self):
         return [self.vardict['conv1_2'], self.vardict['conv2_2'], self.vardict['conv3_3']]
