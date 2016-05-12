@@ -41,7 +41,6 @@ class Network(object):
 
     def pool(self, size=2, stride=2, name=None):
         name = name or self.get_unique_name_('pool')
-        # pool = tf.nn.avg_pool(self.get_output(),
         pool = tf.nn.max_pool(self.get_output(),
                               ksize=[1, size, size, 1],
                               strides=[1, stride, stride, 1],
