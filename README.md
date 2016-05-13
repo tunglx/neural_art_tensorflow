@@ -22,3 +22,7 @@ Running “neural_art_tensorflow.py” without options yields the default settin
 For example:
 
 python neural_art_tensorflow.py -p ./VGG_model -cp ./images/samsung.jpg -sp ./images/style.jpg -i 100 -a 1 -b 200
+
+Open TensorBoard: 
+
+tensorboard --logdir=/tmp/na-logs
